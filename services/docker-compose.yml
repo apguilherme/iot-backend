@@ -1,0 +1,75 @@
+version: '3.8'
+
+volumes:
+  vol-emqx-data:
+    name: iot-emqx-data
+  vol-emqx-etc:
+    name: iot-emqx-etc
+  vol-emqx-log:
+    name: iot-emqx-log
+
+services:
+
+  mongo:
+    container_name: my-mongo
+    image: mongo:4.4
+    restart: always
+    ports:
+      - 27017:27017
+    environment:
+      TZ: "America/Sao_Paulo"
+      MONGO_INITDB_ROOT_USERNAME: "admin"
+      MONGO_INITDB_ROOT_PASSWORD: "passiot"
+    volumes:
+      - ./mongoDataIot:/data/db
+
+  emqx:
+    container_name: my-emqx
+    image: emqx/emqx:4.2.3
+    restart: always
+    ports:
+      - 18083:18083 # dashboard
+      - 18084:18084 # dashboard + ssl
+      - 1883:1883
+      - 8883:8883
+      - 8083:8083
+      - 8084:8084
+      - 8085:8081
+    environment: # change variables defined at \opt\emqx\etc\emqx.conf
+      EMQX_NAME: iot
+      EMQX_HOST: 127.0.0.1
+      TZ: "America/Sao_Paulo"
+      # Plugins to start
+      EMQX_LOADED_PLUGINS: "emqx_recon,emqx_retainer,emqx_management,emqx_dashboard,emqx_auth_mongo"
+      # DEFAULT DASH PASS
+      EMQX_DASHBOARD__DEFAULT_USER__PASSWORD: "passiot"
+      EMQX_ALLOW_ANONYMOUS: "false" # avoid login without credentials
+      EMQX_NOMATCH: "deny" # ACL
+      # MONGO CONNECTION
+      EMQX_AUTH__MONGO__TYPE: single # mongo connection (plugin emqx_auth_mongo)
+      EMQX_AUTH__MONGO__TOPOLOGY__POOL_SIZE: 1
+      EMQX_AUTH__MONGO__TOPOLOGY__MAX_OVERFLOW: 0
+      EMQX_AUTH__MONGO__SERVER: "mongo:27017"
+      EMQX_AUTH__MONGO__POOL: 8
+      EMQX_AUTH__MONGO__LOGIN: "admin"
+      EMQX_AUTH__MONGO__PASSWORD: "passiot"
+      EMQX_AUTH__MONGO__AUTH_SOURCE: admin
+      EMQX_AUTH__MONGO__DATABASE: "my-iot-db"
+      EMQX_AUTH__MONGO__AUTH_QUERY__COLLECTION: "emqxAuthRules"
+      EMQX_AUTH__MONGO__SUPER_QUERY__COLLECTION: "emqxAuthRules"
+      EMQX_AUTH__MONGO__SUPER_QUERY__SUPER_FIELD: "is_superuser" # boolean field on document for user role
+      EMQX_AUTH__MONGO__SUPER_QUERY__SELECTOR: "username=%u"
+      EMQX_AUTH__MONGO__SUPER_QUERY: "off"
+      EMQX_AUTH__MONGO__AUTH_QUERY__PASSWORD_HASH: plain
+      EMQX_AUTH__MONGO__AUTH_QUERY__PASSWORD_FIELD: "password" # field on document for password
+      EMQX_AUTH__MONGO__AUTH_QUERY__SELECTOR: "username=%u"
+      # Access control list, ACL query
+      EMQX_AUTH__MONGO__ACL_QUERY: "on"
+      EMQX_AUTH__MONGO__ACL_QUERY__COLLECTION: "emqxAuthRules"
+      EMQX_AUTH__MONGO__ACL_QUERY__SELECTOR: "username=%u"
+    volumes:
+      - vol-emqx-data:/opt/emqx/data
+      - vol-emqx-etc:/opt/emqx/etc
+      - vol-emqx-log:/opt/emqx/log
+    links:
+      - mongo
