@@ -1,0 +1,33 @@
+{
+  "name": "iot-backend",
+  "version": "1.0.0",
+  "description": "Contains what is necessary to run the project.",
+  "main": "./backend/index.js",
+  "scripts": {
+    "my-docker": "cd services && docker-compose up -d",
+    "dev": "npm run my-docker && supervisor ./backend/index.js"
+  },
+  "dependencies": {
+    "bcrypt": "^5.0.1",
+    "colors": "^1.4.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
+    "express": "^4.17.3",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^6.2.7",
+    "mongoose-unique-validator": "^3.0.0",
+    "morgan": "^1.10.0",
+    "supervisor": "^0.12.0"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/apguilherme/iot-backend.git"
+  },
+  "author": "Guilherme Almeida",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/apguilherme/iot-backend/issues"
+  },
+  "homepage": "https://github.com/apguilherme/iot-backend#readme"
+}
