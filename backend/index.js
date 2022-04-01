@@ -7,10 +7,11 @@ const PORT = 3000;
 const authorize = require("./middleware/auth.js"); // middleware method to validate token, puts on req: "userInfo": { "name": "", "email": "", "id": "" }
 
 const app = express();
-app.use(morgan("tiny"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
+morgan.token('body', req => { return JSON.stringify(req.body) });
+app.use(morgan(':method :url :body :status :res[content-length] :response-time ms'));
 
 // endpoints
 app.use("/api/users", require("./routes/users.js")); // my-iot-db.users

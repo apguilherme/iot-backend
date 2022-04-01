@@ -33,7 +33,8 @@ router.post("/create", async (req, res) => {
       userID: userID,
       name: body.name,
       templateID: body.templateID,
-      templateName: body.templateName
+      templateName: body.templateName,
+      description: body.description
     });
     res.status(200).send({ "message": "success", "deviceCreated": device });
   } catch (error) {

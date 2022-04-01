@@ -3,11 +3,10 @@ const uniqueValidator = require("mongoose-unique-validator");
 
 const deviceSchema = new mongoose.Schema({
     userID: { type: String, required: [true] },
-    //deviceID: { type: String, required: [true], unique: true }, // remove this field???
-    name: { type: String, required: [true] },
-    //selected: { type: Boolean, required: [true], default: false }, // remove this field???
+    name: { type: String, required: [true], unique: true },
     templateID: { type: String, required: [true] },
-    templateName: { type: String, required: [true] }
+    templateName: { type: String, required: [true] },
+    description: { type: String, required: [true] },
 }, { timestamps: true });
 
 deviceSchema.plugin(uniqueValidator, { message: "Error: device already exists." });
