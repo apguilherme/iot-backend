@@ -5,7 +5,7 @@ const Device = require("../models/Device.js");
 router.get("/all", async (req, res) => {
   try {
     let userID = req.userInfo.id;
-    let devices = await Device.find({ userID: userID });
+    let devices = await Device.find({ userID });
     res.status(200).send({ "message": "success", "devices": devices });
   } catch (error) {
     console.log(error);
@@ -16,8 +16,8 @@ router.get("/all", async (req, res) => {
 router.get("/:deviceID", async (req, res) => {
   try {
     let userID = req.userInfo.id;
-    let deviceID = req.params.deviceID;
-    let device = await Device.findOne({ userID: userID, _id: deviceID });
+    let _id = req.params.deviceID;
+    let device = await Device.findOne({ userID, _id });
     res.status(200).send({ "message": "success", "device": device });
   } catch (error) {
     console.log(error);
@@ -31,9 +31,7 @@ router.post("/create", async (req, res) => {
     let body = req.body;
     let device = await Device.create({
       userID: userID,
-      deviceID: body.deviceID,
       name: body.name,
-      selected: body.selected,
       templateID: body.templateID,
       templateName: body.templateName
     });
@@ -47,8 +45,8 @@ router.post("/create", async (req, res) => {
 router.delete("/delete/:deviceID", async (req, res) => {
   try {
     let userID = req.userInfo.id;
-    let deviceID = req.params.deviceID;
-    let device = await Device.deleteOne({ userID: userID, _id: deviceID });
+    let _id = req.params.deviceID;
+    let device = await Device.deleteOne({ userID, _id });
     res.status(200).send({ "message": "success", "deviceDeleted": device });
   } catch (error) {
     console.log(error);
@@ -56,19 +54,12 @@ router.delete("/delete/:deviceID", async (req, res) => {
   }
 });
 
-router.put("/update", async (req, res) => {
-  // https://ibm-learning.udemy.com/course/iot-god-level/learn/lecture/25088452#questions
+router.put("/update/:deviceID", async (req, res) => {
   try {
     let userID = req.userInfo.id;
+    let _id = req.params.deviceID;
     let body = req.body;
-    let device = await Device.update({
-      userID: userID,
-      deviceID: body.deviceID,
-      name: body.name,
-      selected: body.selected,
-      templateID: body.templateID,
-      templateName: body.templateName
-    });
+    let device = await Device.findOneAndUpdate({ userID, _id }, { ...body });
     res.status(200).send({ "message": "success", "deviceUpdated": device });
   } catch (error) {
     console.log(error);

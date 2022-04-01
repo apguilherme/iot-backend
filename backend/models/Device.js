@@ -3,9 +3,9 @@ const uniqueValidator = require("mongoose-unique-validator");
 
 const deviceSchema = new mongoose.Schema({
     userID: { type: String, required: [true] },
-    deviceID: { type: String, required: [true], unique: true },
+    //deviceID: { type: String, required: [true], unique: true }, // remove this field???
     name: { type: String, required: [true] },
-    selected: { type: Boolean, required: [true], default: false },
+    //selected: { type: Boolean, required: [true], default: false }, // remove this field???
     templateID: { type: String, required: [true] },
     templateName: { type: String, required: [true] }
 }, { timestamps: true });
