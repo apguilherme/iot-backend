@@ -5,7 +5,7 @@ const Device = require("../models/Device.js");
 router.get("/all", async (req, res) => {
   try {
     let userID = req.userInfo.id;
-    let devices = await Device.find({ userID });
+    let devices = await Device.find({ userID }).populate('user', ["id", "name", "email"]);
     res.status(200).send({ "message": "success", "devices": devices });
   } catch (error) {
     console.log(error);
@@ -17,7 +17,7 @@ router.get("/:deviceID", async (req, res) => {
   try {
     let userID = req.userInfo.id;
     let _id = req.params.deviceID;
-    let device = await Device.findOne({ userID, _id });
+    let device = await Device.findOne({ userID, _id }).populate('user', ["id", "name", "email"]);
     res.status(200).send({ "message": "success", "device": device });
   } catch (error) {
     console.log(error);
@@ -30,11 +30,9 @@ router.post("/create", async (req, res) => {
     let userID = req.userInfo.id;
     let body = req.body;
     let device = await Device.create({
-      userID: userID,
+      user: userID,
       name: body.name,
-      templateID: body.templateID,
-      templateName: body.templateName,
-      description: body.description
+      description: body.description,
     });
     res.status(200).send({ "message": "success", "deviceCreated": device });
   } catch (error) {
