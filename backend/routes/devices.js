@@ -65,13 +65,14 @@ router.post("/create", async (req, res) => {
   }
 });
 
-router.delete("/delete/:deviceID", async (req, res) => {
+router.delete("/delete/:deviceID/:emqxRuleId", async (req, res) => {
   try {
     let userID = req.userInfo.id;
-    let _id = req.params.deviceID;
-    let device = await Device.deleteOne({ userID, _id });
+    let deviceId = req.params.deviceID;
+    let emqxRuleId = req.params.emqxRuleId;
+    let device = await Device.deleteOne({ userID, deviceId });
     // also delete rule from emqx
-
+    await deleteSaverRule(emqxRuleId);
     res.status(200).send({ "message": "success", "deviceDeleted": device });
   } catch (error) {
     console.log(error);
@@ -99,7 +100,6 @@ router.put("/updateSaverRule/:deviceID", async (req, res) => {
     let userID = req.userInfo.id;
     let deviceID = req.params.deviceID;
     let saverRule = req.body.saverRule;
-    console.log(saverRule)
     if (userID === saverRule.userId && deviceID === saverRule.deviceId) {
       let rule = await updateSaverRuleStatus(saverRule.emqxRuleId, saverRule.status);
       res.status(200).send({ "message": "success", "ruleUpdated": rule });
@@ -181,12 +181,11 @@ async function updateSaverRuleStatus(emqxRuleId, status) {
   }
 }
 
-async function deleteSaverRules(deviceID) {
+async function deleteSaverRule(emqxRuleId) {
   try {
-    let rule = await EmqxSaver.findOne({ deviceID });
-    let url = EMQX_API_RULES + "/" + rule.emqxRuleId;
+    let url = EMQX_API_RULES + "/" + emqxRuleId;
     let emqxRule = await axios.delete(url, auth);
-    let mongoRule = await EmqxSaver.deleteOne({ deviceId });
+    let mongoRule = await EmqxSaver.deleteOne({ emqxRuleId });
     return [emqxRule, mongoRule];
   } catch (error) {
     console.log("deleteSaverRules error: ".red, error);

@@ -75,5 +75,5 @@ services:
       - vol-emqx-log:/opt/emqx/log
     links:
       - mongo
-    extra_hosts: # for webhooks, ipv4
+    extra_hosts: # for webhooks, ipv4, use this only when running locally!!!
       - "localhost:192.168.15.89"
