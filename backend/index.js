@@ -17,6 +17,8 @@ app.use(morgan(':method :url :body :status :res[content-length] :response-time m
 app.use("/api/users", require("./routes/users.js")); // my-iot-db.users
 app.use("/api/devices", authorize, require("./routes/devices.js"));
 app.use("/api/dashboards", authorize, require("./routes/dashboards.js"));
+app.use("/api/webhooks", require("./routes/webhooks.js"));
+app.use("/api/broker", require("./routes/broker.js"));
 
 app.get("/", (req, res) => {
   res.send({ "status": "running..." });

@@ -34,7 +34,7 @@ services:
       - 8883:8883
       - 8083:8083
       - 8084:8084
-      - 8085:8081
+      - 8085:8081 # emqx api
     environment: # change variables defined at \opt\emqx\etc\emqx.conf
       EMQX_NAME: iot
       EMQX_HOST: 127.0.0.1
@@ -67,9 +67,13 @@ services:
       EMQX_AUTH__MONGO__ACL_QUERY: "on"
       EMQX_AUTH__MONGO__ACL_QUERY__COLLECTION: "emqxAuthRules"
       EMQX_AUTH__MONGO__ACL_QUERY__SELECTOR: "username=%u"
+      # emqx app secret
+      EMQX_MANAGEMENT__DEFAULT__APPLICATION__SECRET: "passiot"
     volumes:
       - vol-emqx-data:/opt/emqx/data
       - vol-emqx-etc:/opt/emqx/etc
       - vol-emqx-log:/opt/emqx/log
     links:
       - mongo
+    extra_hosts: # for webhooks, ipv4
+      - "localhost:192.168.15.89"

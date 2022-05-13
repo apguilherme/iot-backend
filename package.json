@@ -8,6 +8,7 @@
     "dev": "npm run my-docker && supervisor ./backend/index.js"
   },
   "dependencies": {
+    "axios": "^0.27.2",
     "bcrypt": "^5.0.1",
     "colors": "^1.4.0",
     "cors": "^2.8.5",
@@ -19,7 +20,6 @@
     "morgan": "^1.10.0",
     "supervisor": "^0.12.0"
   },
-  "devDependencies": {},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/apguilherme/iot-backend.git"

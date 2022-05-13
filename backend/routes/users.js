@@ -11,7 +11,6 @@ const authorize = require("../middleware/auth.js");
 router.post("/register", async (req, res) => {
   try {
     let body = req.body;
-    console.log(body)
     let encryptPass = bcrypt.hashSync(body.password, 10);
     let user = await User.create({
       name: body.name,
@@ -60,7 +59,7 @@ router.get("/user", authorize, async (req, res) => {
     let user = await User.findOne({ _id });
     res.status(200).send({ "message": "success", "userName": user.name });
   } catch (error) {
-    console.log(error);
+    console.log("/user error: ".red + error);
     res.status(500).json({ "message": "failure", "error": error });
   }
 });
@@ -71,7 +70,7 @@ router.delete("/delete", authorize, async (req, res) => {
     let user = await User.deleteOne({ _id });
     res.status(200).send({ "message": "success", "userDeleted": user });
   } catch (error) {
-    console.log(error);
+    console.log("/delete error: ".red + error);
     res.status(500).json({ "message": "failure", "error": error });
   }
 });
@@ -83,7 +82,7 @@ router.put("/update", authorize, async (req, res) => {
     let user = await User.findOneAndUpdate({ _id }, { ...body });
     res.status(200).send({ "message": "success", "userUpdated": user });
   } catch (error) {
-    console.log(error);
+    console.log("/update error: ".red + error);
     res.status(500).json({ "message": "failure", "error": error });
   }
 });

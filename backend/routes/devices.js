@@ -1,11 +1,32 @@
 const express = require("express");
+const axios = require("axios");
 const router = express.Router();
+const colors = require("colors");
 const Device = require("../models/Device.js");
+const EmqxSaver = require("../models/EmqxSaver.js");
+
+const EMQX_API_RULES = "http://localhost:8085/api/v4/rules";
+
+const auth = {
+  auth: {
+    username: "admin",
+    password: "passiot"
+  }
+};
+
+// CRUD devices
 
 router.get("/all", async (req, res) => {
   try {
     let userID = req.userInfo.id;
     let devices = await Device.find({ userID }).populate('user', ["id", "name", "email"]);
+    devices = JSON.parse(JSON.stringify(devices));
+    // get saver rules
+    let saverRules = await getSaverRules(userID);
+    // add the rule for each device
+    devices.forEach((device, index) => {
+      devices[index].saverRule = saverRules.filter(saverRule => saverRule.deviceId === device._id)[0];
+    });
     res.status(200).send({ "message": "success", "devices": devices });
   } catch (error) {
     console.log(error);
@@ -18,6 +39,7 @@ router.get("/:deviceID", async (req, res) => {
     let userID = req.userInfo.id;
     let _id = req.params.deviceID;
     let device = await Device.findOne({ userID, _id }).populate('user', ["id", "name", "email"]);
+    // TODO: get saver rule for this device
     res.status(200).send({ "message": "success", "device": device });
   } catch (error) {
     console.log(error);
@@ -34,7 +56,9 @@ router.post("/create", async (req, res) => {
       name: body.name,
       description: body.description,
     });
-    res.status(200).send({ "message": "success", "deviceCreated": device });
+    // create rule on emqx broker and mongo
+    let rule = await createSaverRule(userID, device._id, false);
+    res.status(200).send({ "message": "success", "deviceCreated": device, "ruleCreated": rule });
   } catch (error) {
     console.log(error);
     res.status(500).json({ "message": "failure", "error": error });
@@ -46,6 +70,8 @@ router.delete("/delete/:deviceID", async (req, res) => {
     let userID = req.userInfo.id;
     let _id = req.params.deviceID;
     let device = await Device.deleteOne({ userID, _id });
+    // also delete rule from emqx
+
     res.status(200).send({ "message": "success", "deviceDeleted": device });
   } catch (error) {
     console.log(error);
@@ -53,7 +79,7 @@ router.delete("/delete/:deviceID", async (req, res) => {
   }
 });
 
-router.put("/update/:deviceID", async (req, res) => {
+router.put("/update/:deviceID", async (req, res) => { // not being used
   try {
     let userID = req.userInfo.id;
     let _id = req.params.deviceID;
@@ -62,6 +88,118 @@ router.put("/update/:deviceID", async (req, res) => {
     res.status(200).send({ "message": "success", "deviceUpdated": device });
   } catch (error) {
     console.log(error);
+    res.status(500).json({ "message": "failure", "error": error });
+  }
+});
+
+// CRUD emqx rules (saver)
+
+router.put("/updateSaverRule/:deviceID", async (req, res) => {
+  try {
+    let userID = req.userInfo.id;
+    let deviceID = req.params.deviceID;
+    let saverRule = req.body.saverRule;
+    console.log(saverRule)
+    if (userID === saverRule.userId && deviceID === saverRule.deviceId) {
+      let rule = await updateSaverRuleStatus(saverRule.emqxRuleId, saverRule.status);
+      res.status(200).send({ "message": "success", "ruleUpdated": rule });
+    }
+    else {
+      res.status(200).send({ "message": "failure", "error": "Incorrect userId or deviceId." });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ "message": "failure", "error": error });
+  }
+});
+
+async function createSaverRule(userId, deviceId, status = false) {
+  try {
+    let url = EMQX_API_RULES;
+    const topic =  userId + "/" + deviceId + "/+/sdata";
+    const sql = "SELECT topic, payload FROM \"" + topic + "\" WHERE payload.save = 1";
+    var rule = {
+      rawsql: sql,
+      actions: [
+        {
+          name: "data_to_webserver",
+          params: {
+            $resource: "resource:eabed518", //global.resourceSaver.id, // TODO
+            payload_tmpl: '{"userId":"' +  userId + '", "payload": ${payload}, "topic": "${topic}"}'
+          }
+        }
+      ],
+      description: "saver-rule",
+      enabled: status
+    };
+    const res = await axios.post(url, rule, auth); // save on emqx
+    if (res.status === 200 && res.data.data) { // get the rule id and save on mongo too
+      await EmqxSaver.create({
+        "userId": userId,
+        "deviceId": deviceId,
+        "emqxRuleId": res.data.data.id,
+        "status": status
+      })
+      console.log("rule saved: ".green + JSON.stringify(res.data.data));
+      return res.data.data;
+    }
+    else {
+      throw new Error("Error saving new rule. " + JSON.stringify(res.data));
+    }
+  } catch (error) {
+    console.log("createSaverRule error: ".red + error);
+    return {};
+  }
+}
+
+async function getSaverRules(userId) {
+  try {
+    let rules = await EmqxSaver.find({ userId });
+    return rules;
+  } catch (error) {
+    console.log("getSaverRules error: ".red, error);
+  }
+}
+
+async function updateSaverRuleStatus(emqxRuleId, status) {
+  try {
+    let url = EMQX_API_RULES + "/" + emqxRuleId;
+    let newRule = {
+      enabled: status
+    }
+    const res = await axios.put(url, newRule, auth); // update on emqx
+    if (res.status === 200 && res.data.data) { // get the rule id and update on mongo too
+      await EmqxSaver.updateOne({ "emqxRuleId": res.data.data.id }, { status });
+      console.log("rule updated: ".green + JSON.stringify(res.data.data));
+      return res.data.data;
+    }
+    else {
+      throw new Error("Error updating new rule. " + JSON.stringify(res.data));
+    }
+  } catch (error) {
+    console.log("updateSaverRuleStatus error: ".red, error);
+  }
+}
+
+async function deleteSaverRules(deviceID) {
+  try {
+    let rule = await EmqxSaver.findOne({ deviceID });
+    let url = EMQX_API_RULES + "/" + rule.emqxRuleId;
+    let emqxRule = await axios.delete(url, auth);
+    let mongoRule = await EmqxSaver.deleteOne({ deviceId });
+    return [emqxRule, mongoRule];
+  } catch (error) {
+    console.log("deleteSaverRules error: ".red, error);
+  }
+}
+
+router.get("/emqx/rule", async (req, res) => { // TODO: apagar, teste apenas
+  try {
+    //let rule = await createSaverRule("USERID", "DEVICEID", true);
+    let rule = await getSaverRules("USERID")
+    res.status(200).send({ "message": "success", "rule": rule });
+  } catch (error) {
+    console.log("/emqx/rule error: ".red + error);
     res.status(500).json({ "message": "failure", "error": error });
   }
 });
