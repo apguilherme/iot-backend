@@ -2,20 +2,21 @@ const mongoose = require("mongoose");
 
 const widgetSchema = new mongoose.Schema({
     type: { type: String, required: [true] },
-    name: { type: String },
-    description: { type: String },
-    icon: { type: String },
-    unit: { type: String },
+    name: { type: String, required: [true] },
+    description: { type: String, required: [true] },
+    icon: { type: String, required: [true] },
+    unit: { type: String }, // cannot be required
     timeInterval: { type: Number, required: [true] },
-    size: { type: String },
+    size: { type: String, required: [true] },
     device: { type: mongoose.Schema.Types.ObjectId, ref: 'Device', required: [true] },
+    variableFromDevice: { type: String, required: [true] },
 });
 
 const dashboardSchema = new mongoose.Schema({
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: [true] },
     widgets: [widgetSchema],
     name: { type: String, required: [true] },
-    description: { type: String },
+    description: { type: String, required: [true] },
     isActive: { type: Boolean, default: true },
 }, { timestamps: true });
 

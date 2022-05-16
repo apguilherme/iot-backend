@@ -3,14 +3,16 @@ const axios = require("axios");
 const router = express.Router();
 const colors = require("colors");
 const Device = require("../models/Device.js");
+const Dashboard = require("../models/Dashboard.js");
 const EmqxSaver = require("../models/EmqxSaver.js");
+const EmqxAlert = require("../models/EmqxAlert.js");
 
-const EMQX_API_RULES = "http://localhost:8085/api/v4/rules";
+const EMQX_API_RULES = process.env.EMQX_API_RULES;
 
 const auth = {
   auth: {
-    username: "admin",
-    password: "passiot"
+    username: process.env.EMQX_USER,
+    password: process.env.EMQX_PASS
   }
 };
 
@@ -23,9 +25,24 @@ router.get("/all", async (req, res) => {
     devices = JSON.parse(JSON.stringify(devices));
     // get saver rules
     let saverRules = await getSaverRules(userID);
-    // add the rule for each device
+    let dashs = await getDashboards(userID);
+    // get alarm rules
+    let alarmsRules = await getAlarmRules(userID);
     devices.forEach((device, index) => {
+      // add the saver rule of each device
       devices[index].saverRule = saverRules.filter(saverRule => saverRule.deviceId === device._id)[0];
+      // add the dashboards of each device
+      devices[index].dashboards = [];
+      dashs.forEach(dash => {
+        dash.widgets.forEach(widget => {
+          //console.log(widget.device.toString())
+          if (widget.device.toString() === device._id) {
+            devices[index].dashboards.push(dash);
+          }
+        })
+      })
+      // add the alarms of each device
+      devices[index].alerts = alarmsRules.filter(alarmRule => alarmRule.deviceId === device._id)
     });
     res.status(200).send({ "message": "success", "devices": devices });
   } catch (error) {
@@ -55,6 +72,7 @@ router.post("/create", async (req, res) => {
       user: userID,
       name: body.name,
       description: body.description,
+      variables: body.variables,
     });
     // create rule on emqx broker and mongo
     let rule = await createSaverRule(userID, device._id, false);
@@ -93,7 +111,7 @@ router.put("/update/:deviceID", async (req, res) => { // not being used
   }
 });
 
-// CRUD emqx rules (saver)
+// CRUD emqx rules
 
 router.put("/updateSaverRule/:deviceID", async (req, res) => {
   try {
@@ -116,7 +134,7 @@ router.put("/updateSaverRule/:deviceID", async (req, res) => {
 async function createSaverRule(userId, deviceId, status = false) {
   try {
     let url = EMQX_API_RULES;
-    const topic =  userId + "/" + deviceId + "/+/sdata";
+    const topic =  userId + "/" + deviceId + "/+/sdata"; // + means any variable from device.
     const sql = "SELECT topic, payload FROM \"" + topic + "\" WHERE payload.save = 1";
     var rule = {
       rawsql: sql,
@@ -124,7 +142,7 @@ async function createSaverRule(userId, deviceId, status = false) {
         {
           name: "data_to_webserver",
           params: {
-            $resource: "resource:eabed518", //global.resourceSaver.id, // TODO
+            $resource: process.env.EMQX_RESOURCE_SAVER_WEBHOOK_ID, //global.resourceSaver.id
             payload_tmpl: '{"userId":"' +  userId + '", "payload": ${payload}, "topic": "${topic}"}'
           }
         }
@@ -140,11 +158,11 @@ async function createSaverRule(userId, deviceId, status = false) {
         "emqxRuleId": res.data.data.id,
         "status": status
       })
-      console.log("rule saved: ".green + JSON.stringify(res.data.data));
+      console.log("Rule saved for saver: ".green + JSON.stringify(res.data.data));
       return res.data.data;
     }
     else {
-      throw new Error("Error saving new rule. " + JSON.stringify(res.data));
+      throw new Error("Error saving new rule for saver. " + JSON.stringify(res.data));
     }
   } catch (error) {
     console.log("createSaverRule error: ".red + error);
@@ -170,11 +188,11 @@ async function updateSaverRuleStatus(emqxRuleId, status) {
     const res = await axios.put(url, newRule, auth); // update on emqx
     if (res.status === 200 && res.data.data) { // get the rule id and update on mongo too
       await EmqxSaver.updateOne({ "emqxRuleId": res.data.data.id }, { status });
-      console.log("rule updated: ".green + JSON.stringify(res.data.data));
+      console.log("Saver rule updated: ".green + JSON.stringify(res.data.data));
       return res.data.data;
     }
     else {
-      throw new Error("Error updating new rule. " + JSON.stringify(res.data));
+      throw new Error("Error updating saver rule. " + JSON.stringify(res.data));
     }
   } catch (error) {
     console.log("updateSaverRuleStatus error: ".red, error);
@@ -192,15 +210,22 @@ async function deleteSaverRule(emqxRuleId) {
   }
 }
 
-router.get("/emqx/rule", async (req, res) => { // TODO: apagar, teste apenas
+async function getDashboards(userId) {
   try {
-    //let rule = await createSaverRule("USERID", "DEVICEID", true);
-    let rule = await getSaverRules("USERID")
-    res.status(200).send({ "message": "success", "rule": rule });
+    let dashs = await Dashboard.find({ userId });
+    return dashs;
   } catch (error) {
-    console.log("/emqx/rule error: ".red + error);
-    res.status(500).json({ "message": "failure", "error": error });
+    console.log("getDashboards error: ".red, error);
   }
-});
+}
+
+async function getAlarmRules(userId) {
+  try {
+    let rules = await EmqxAlert.find({ userId });
+    return rules;
+  } catch (error) {
+    console.log("getAlarmRules error: ".red, error);
+  }
+}
 
 module.exports = router;

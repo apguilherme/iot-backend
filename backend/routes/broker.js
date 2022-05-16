@@ -3,16 +3,19 @@ const router = express.Router();
 const axios = require("axios");
 const colors = require("colors");
 
+// TEST ENDPOINT, NOT BEING USED.
+
+const EMQX_API_RESOURCES = "http://localhost:8085/api/v4/resources/";
+
 const auth = {
     auth: {
-        username: "admin",
-        password: "passiot"
+        username: process.env.EMQX_USER,
+        password: process.env.EMQX_PASS
     }
 };
 
 global.resourceSaver = null;
 global.resourceAlarm = null;
-const EMQX_API_RESOURCES = "http://localhost:8085/api/v4/resources/";
 
 async function getResources() {
     let url = EMQX_API_RESOURCES; 
