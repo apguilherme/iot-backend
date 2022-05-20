@@ -3,6 +3,7 @@ const axios = require("axios");
 const router = express.Router();
 const colors = require("colors");
 const EmqxAlert = require("../models/EmqxAlert.js");
+const Notification = require("../models/Notification.js");
 
 const EMQX_API_RULES = process.env.EMQX_API_RULES;
 
@@ -49,14 +50,25 @@ router.put("/updateAlertRule/:deviceID", async (req, res) => {
 
 router.delete("/delete/:deviceID/:emqxRuleId", async (req, res) => {
     try {
-      let emqxRuleId = req.params.emqxRuleId;
-      await deleteAlertRule(emqxRuleId);
-      res.status(200).send({ "message": "success", "alertDeleted": emqxRuleId });
+        let emqxRuleId = req.params.emqxRuleId;
+        await deleteAlertRule(emqxRuleId);
+        res.status(200).send({ "message": "success", "alertDeleted": emqxRuleId });
     } catch (error) {
-      console.log(error);
-      res.status(500).json({ "message": "failure", "error": error });
+        console.log(error);
+        res.status(500).json({ "message": "failure", "error": error });
     }
-  });
+});
+
+router.get("/notifications", async (req, res) => {
+    try {
+        let userID = req.userInfo.id;
+        let notifications = await Notification.find({ userID }).sort({createdAt: -1});
+        res.status(200).send({ "message": "success", "userNotifications": notifications });
+    } catch (error) {
+        console.log("/notifications error: ".red + error);
+        res.status(500).json({ "message": "failure", "error": error });
+    }
+});
 
 // CRUD emqx rules
 
@@ -135,14 +147,14 @@ async function createAlarmRule(alert) {
 
 async function deleteAlertRule(emqxRuleId) {
     try {
-      let url = EMQX_API_RULES + "/" + emqxRuleId;
-      let emqxRule = await axios.delete(url, auth);
-      let mongoRule = await EmqxAlert.deleteOne({ emqxRuleId });
-      return [emqxRule, mongoRule];
+        let url = EMQX_API_RULES + "/" + emqxRuleId;
+        let emqxRule = await axios.delete(url, auth);
+        let mongoRule = await EmqxAlert.deleteOne({ emqxRuleId });
+        return [emqxRule, mongoRule];
     } catch (error) {
-      console.log("deleteAlertRule error: ".red, error);
+        console.log("deleteAlertRule error: ".red, error);
     }
-  }
+}
 
 
 module.exports = router;

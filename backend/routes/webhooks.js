@@ -8,13 +8,13 @@ const DeviceData = require("../models/DeviceData.js");
 const Device = require("../models/Device.js");
 const Notification = require("../models/Notification.js");
 
-var client; // mqtt client to send notifications to frontend.
+var mqttClient; // mqtt client to send notifications to frontend.
 
 function beginMqtt() {
   let options = {
     port: 1883,
     host: "localhost",
-    clientId: "webhook_superuser-iot-backend-" + uuidv4(),
+    clientId: "backend/" + uuidv4(),
     username: process.env.EMQX_SUPERUSER, // can send and subscribe to any topic
     password: process.env.EMQX_SUPERUSER,
     keepalive: 60,
@@ -24,22 +24,23 @@ function beginMqtt() {
     clean: true,
     encoding: "utf8",
   };
-  client = mqtt.connect("mqtt://localhost", options);
-  client.on("connect", function () {
+  mqttClient = mqtt.connect("mqtt://localhost", options);
+  mqttClient.on("connect", function () {
     console.log(">>> MQTT client connected successfully.".green);
   });
-  client.on("reconnect", function () {
+  mqttClient.on("reconnect", function () {
     console.log(">>> MQTT client REconnected successfully.".green);
   });
-  client.on("error", function () {
+  mqttClient.on("error", function () {
     console.log(">>> MQTT client connection failed.".red);
   });
 };
 
 function sendMqttNotification(notification) {
-  let topic = notification.userId + "/deviceId/variable/notification";
-  let msg = `ALERT: ${notification.variable} = ${notification.payload.value}. This is ${notification.condition} ${notification.value}.`;
-  client.publish(topic, msg);
+  let topic = notification.userId + "/notifications";
+  let message = JSON.stringify(notification);
+  console.log("Publish notification:".yellow, topic, message);
+  mqttClient.publish(topic, message);
 };
 
 router.post("/saver", async (req, res) => { // webhook called when data.payload.save equals 1, defined on emqx rule.
@@ -93,7 +94,6 @@ router.post("/alarm", async (req, res) => { // webhook called by emqx alarm reso
         sendMqttNotification(alertReceived);
       }
     }
-    
     res.status(200).send({ "message": "success", "notification": alertReceived });
   } catch (error) {
     console.log("/alarm error: ".red + error);
