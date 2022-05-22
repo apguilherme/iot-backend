@@ -55,8 +55,8 @@ services:
       EMQX_AUTH__MONGO__PASSWORD: "passiot"
       EMQX_AUTH__MONGO__AUTH_SOURCE: admin
       EMQX_AUTH__MONGO__DATABASE: "my-iot-db"
-      EMQX_AUTH__MONGO__AUTH_QUERY__COLLECTION: "emqxAuthRules"
-      EMQX_AUTH__MONGO__SUPER_QUERY__COLLECTION: "emqxAuthRules"
+      EMQX_AUTH__MONGO__AUTH_QUERY__COLLECTION: "emqxauthrules" # GET /brokerauth
+      EMQX_AUTH__MONGO__SUPER_QUERY__COLLECTION: "emqxauthrules"
       EMQX_AUTH__MONGO__SUPER_QUERY__SUPER_FIELD: "is_superuser" # boolean field on document for user role
       EMQX_AUTH__MONGO__SUPER_QUERY__SELECTOR: "username=%u"
       EMQX_AUTH__MONGO__SUPER_QUERY: "off"
@@ -65,7 +65,7 @@ services:
       EMQX_AUTH__MONGO__AUTH_QUERY__SELECTOR: "username=%u"
       # Access control list, ACL query
       EMQX_AUTH__MONGO__ACL_QUERY: "on"
-      EMQX_AUTH__MONGO__ACL_QUERY__COLLECTION: "emqxAuthRules"
+      EMQX_AUTH__MONGO__ACL_QUERY__COLLECTION: "emqxauthrules" # GET /brokerauth
       EMQX_AUTH__MONGO__ACL_QUERY__SELECTOR: "username=%u"
       # emqx app secret
       EMQX_MANAGEMENT__DEFAULT__APPLICATION__SECRET: "passiot"
