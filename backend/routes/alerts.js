@@ -81,7 +81,7 @@ async function updateAlertRuleStatus(emqxRuleId, status) {
         const res = await axios.put(url, newRule, auth); // update on emqx
         if (res.status === 200 && res.data.data) { // get the rule id and update on mongo too
             await EmqxAlert.updateOne({ "emqxRuleId": res.data.data.id }, { status });
-            console.log("Alert rule updated: ".green + JSON.stringify(res.data.data));
+            console.log("Alert rule updated: ".yellow + JSON.stringify(res.data.data));
             return res.data.data;
         }
         else {
@@ -133,7 +133,7 @@ async function createAlarmRule(alert) {
             rule.actions[0].params.payload_tmpl = payload_templ;
             let updateRule = await axios.put(url, rule, auth);
 
-            console.log("Rule saved for alarm: ".green + JSON.stringify(updateRule.data.data));
+            console.log("Rule saved for alarm: ".yellow + JSON.stringify(updateRule.data.data));
             return updateRule.data.data;
         }
         else {

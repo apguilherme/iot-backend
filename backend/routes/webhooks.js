@@ -39,14 +39,14 @@ function beginMqtt() {
 function sendMqttNotification(notification) {
   let topic = notification.userId + "/notifications";
   let message = JSON.stringify(notification);
-  console.log("Publish notification:".yellow, topic, message);
+  console.log("Publish notification:".magenta, topic, message);
   mqttClient.publish(topic, message);
 };
 
 router.post("/saver", async (req, res) => { // webhook called when data.payload.save equals 1, defined on emqx rule.
   try {
     console.log("Webhook saver:".magenta);
-    console.log(`>>> token from emqx resource: ${req.headers.token}`.blue); // this token is defined on http://localhost:18083/#/resources > view
+    console.log("Token from emqx resource:".magenta, req.headers.token); // this token is defined on http://localhost:18083/#/resources > view
     if (req.headers.token !== "iotapp") {
       throw new Error("Invalid emqx token.")
     };
@@ -75,7 +75,7 @@ router.post("/saver", async (req, res) => { // webhook called when data.payload.
 router.post("/alarm", async (req, res) => { // webhook called by emqx alarm resource.
   try {
     console.log("Webhook alarm:".magenta);
-    console.log(`>>> token from emqx resource: ${req.headers.token}`.blue); // this token is defined on http://localhost:18083/#/resources > view
+    console.log("Token from emqx resource:".magenta, req.headers.token); // this token is defined on http://localhost:18083/#/resources > view
     if (req.headers.token !== "iotapp") {
       throw new Error("Invalid emqx token.")
     };
@@ -83,14 +83,14 @@ router.post("/alarm", async (req, res) => { // webhook called by emqx alarm reso
     // check time passed between notifications
     let lastNotification = await Notification.findOne({ deviceId: alertReceived.deviceId, emqxRuleId: alertReceived.emqxRuleId }).sort({ createdAt: -1 });
     if (!lastNotification) {
-      console.log("> new notification.".blue);
+      console.log("New notification.".magenta);
       Notification.create(alertReceived);
       sendMqttNotification(alertReceived);
     }
     else { // check triggerTimeInterval (minutes)
       let timeBetweenNotifications = (new Date().getTime() - new Date(lastNotification.createdAt).getTime())/1000/60; // minutes
       if (timeBetweenNotifications > alertReceived.triggerTimeInterval) {
-        console.log("> repeat notification.".blue);
+        console.log("Repeat notification.".magenta);
         Notification.create(alertReceived);
         sendMqttNotification(alertReceived);
       }

@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const jwtSecret = process.env.JWT_SECRET;
 
 const authorize = (req, res, next) => {
-    console.log(`>>> token: ${req.headers.token}`.blue);
+    console.log("Token:".blue, req.headers.token);
     jwt.verify(req.headers.token, jwtSecret, (error, decoded) => {
         if (error){
             console.log(error);
@@ -12,7 +12,7 @@ const authorize = (req, res, next) => {
         }
         else {
             req.userInfo = decoded;
-            console.log(`>>> userInfo: ${JSON.stringify(req.userInfo)}`.yellow);
+            console.log("User info:".blue, JSON.stringify(req.userInfo));
             next();
         }
     });

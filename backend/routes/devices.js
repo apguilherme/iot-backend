@@ -158,7 +158,7 @@ async function createSaverRule(userId, deviceId, status = false) {
         "emqxRuleId": res.data.data.id,
         "status": status
       })
-      console.log("Rule saved for saver: ".green + JSON.stringify(res.data.data));
+      console.log("Rule saved for saver: ".yellow + JSON.stringify(res.data.data));
       return res.data.data;
     }
     else {
@@ -188,7 +188,7 @@ async function updateSaverRuleStatus(emqxRuleId, status) {
     const res = await axios.put(url, newRule, auth); // update on emqx
     if (res.status === 200 && res.data.data) { // get the rule id and update on mongo too
       await EmqxSaver.updateOne({ "emqxRuleId": res.data.data.id }, { status });
-      console.log("Saver rule updated: ".green + JSON.stringify(res.data.data));
+      console.log("Saver rule updated: ".yellow + JSON.stringify(res.data.data));
       return res.data.data;
     }
     else {

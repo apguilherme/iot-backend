@@ -30,11 +30,11 @@ async function getResources() {
             res.data.data.forEach(resource => {
                 if (resource.description == "alarm-webhook") {
                     global.resourceAlarm = resource;
-                    console.log("resourceAlarm: ".blue, global.resourceAlarm);
+                    console.log("resourceAlarm: ".yellow, global.resourceAlarm);
                   }
                   if (resource.description == "saver-webhook") {
                     global.resourceSaver = resource;
-                    console.log("resourceSaver: ".blue, global.resourceSaver);
+                    console.log("resourceSaver: ".yellow, global.resourceSaver);
                   }
             })
         }
@@ -72,10 +72,10 @@ async function createResources() {
         let resSaver = await axios.post(url, payloadSaver, auth);
         let resAlarm = await axios.post(url, payloadAlarm, auth);
         if (resAlarm.status === 200) {
-            console.log("Resource alarm created.".green);
+            console.log("Resource alarm created.".yellow);
         }
         if (resSaver.status === 200) {
-            console.log("Resource saver created.".green);
+            console.log("Resource saver created.".yellow);
         }
     } catch (error) {
         console.log("createResources error: ".red, error);
