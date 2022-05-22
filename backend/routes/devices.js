@@ -21,7 +21,7 @@ const auth = {
 router.get("/all", async (req, res) => {
   try {
     let userID = req.userInfo.id;
-    let devices = await Device.find({ userID }).populate('user', ["id", "name", "email"]);
+    let devices = await Device.find({ user: userID }).populate('user', ["id", "name", "email"]);
     devices = JSON.parse(JSON.stringify(devices));
     // get saver rules
     let saverRules = await getSaverRules(userID);
@@ -55,7 +55,7 @@ router.get("/:deviceID", async (req, res) => {
   try {
     let userID = req.userInfo.id;
     let _id = req.params.deviceID;
-    let device = await Device.findOne({ userID, _id }).populate('user', ["id", "name", "email"]);
+    let device = await Device.findOne({ user: userID, _id }).populate('user', ["id", "name", "email"]);
     // TODO: get saver rule for this device
     res.status(200).send({ "message": "success", "device": device });
   } catch (error) {
@@ -103,7 +103,7 @@ router.put("/update/:deviceID", async (req, res) => { // not being used
     let userID = req.userInfo.id;
     let _id = req.params.deviceID;
     let body = req.body;
-    let device = await Device.findOneAndUpdate({ userID, _id }, { ...body });
+    let device = await Device.findOneAndUpdate({ user: userID, _id }, { ...body });
     res.status(200).send({ "message": "success", "deviceUpdated": device });
   } catch (error) {
     console.log(error);
@@ -172,7 +172,7 @@ async function createSaverRule(userId, deviceId, status = false) {
 
 async function getSaverRules(userId) {
   try {
-    let rules = await EmqxSaver.find({ userId });
+    let rules = await EmqxSaver.find({ userId: userId });
     return rules;
   } catch (error) {
     console.log("getSaverRules error: ".red, error);
@@ -212,7 +212,7 @@ async function deleteSaverRule(emqxRuleId) {
 
 async function getDashboards(userId) {
   try {
-    let dashs = await Dashboard.find({ userId });
+    let dashs = await Dashboard.find({ user: userId });
     return dashs;
   } catch (error) {
     console.log("getDashboards error: ".red, error);
@@ -221,7 +221,7 @@ async function getDashboards(userId) {
 
 async function getAlarmRules(userId) {
   try {
-    let rules = await EmqxAlert.find({ userId });
+    let rules = await EmqxAlert.find({ userId: userId });
     return rules;
   } catch (error) {
     console.log("getAlarmRules error: ".red, error);

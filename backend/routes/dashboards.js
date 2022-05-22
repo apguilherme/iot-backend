@@ -6,7 +6,7 @@ const Dashboard = require("../models/Dashboard.js");
 router.get("/all", async (req, res) => {
   try {
     let userID = req.userInfo.id;
-    let dashboards = await Dashboard.find({ userID })
+    let dashboards = await Dashboard.find({ user: userID })
         .populate('user', ["id", "name", "email"])
         .populate('widgets.device');
     res.status(200).send({ "message": "success", "dashboards": dashboards });
@@ -20,7 +20,7 @@ router.get("/:dashboardID", async (req, res) => {
   try {
     let userID = req.userInfo.id;
     let _id = req.params.dashboardID;
-    let dashboard = await Dashboard.findOne({ userID, _id })
+    let dashboard = await Dashboard.findOne({ user: userID, _id })
         .populate('user', ["id", "name", "email"])
         .populate('widgets.device');
     res.status(200).send({ "message": "success", "dashboard": dashboard });
@@ -64,7 +64,7 @@ router.put("/update/:dashboardID", async (req, res) => {
     let userID = req.userInfo.id;
     let _id = req.params.dashboardID;
     let body = req.body;
-    let dashboard = await Dashboard.findOneAndUpdate({ userID, _id }, { ...body });
+    let dashboard = await Dashboard.findOneAndUpdate({ user: userID, _id }, { ...body });
     res.status(200).send({ "message": "success", "dashboardUpdated": dashboard });
   } catch (error) {
     console.log("/update/:dashboardID: ".red + error);

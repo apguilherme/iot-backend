@@ -45,7 +45,7 @@ function sendMqttNotification(notification) {
 
 router.post("/saver", async (req, res) => { // webhook called when data.payload.save equals 1, defined on emqx rule.
   try {
-    console.log("Webhook saver:".blue);
+    console.log("Webhook saver:".magenta);
     console.log(`>>> token from emqx resource: ${req.headers.token}`.blue); // this token is defined on http://localhost:18083/#/resources > view
     if (req.headers.token !== "iotapp") {
       throw new Error("Invalid emqx token.")
@@ -54,15 +54,16 @@ router.post("/saver", async (req, res) => { // webhook called when data.payload.
     // check if device sending data really exists and then save data on mongo.
     let deviceId = data.topic.split("/")[1]; // userId/deviceId/variable/sdata
     let variable = data.topic.split("/")[2];
-    let device = await Device.findOne({ _id: deviceId, userId: data.userId });
+    let device = await Device.findOne({ _id: deviceId, user: data.userId });
     if (device) {
-      await DeviceData.create({
+      let logSaved = await DeviceData.create({
         "userId": data.userId,
         "deviceId": deviceId,
         "variable": variable,
         "value": data.payload.value,
         "time": Date.now(),
       });
+      console.log("Saved device data:".yellow, JSON.stringify(logSaved));
     };
     res.status(200).send({ "message": "success" });
   } catch (error) {
@@ -73,7 +74,7 @@ router.post("/saver", async (req, res) => { // webhook called when data.payload.
 
 router.post("/alarm", async (req, res) => { // webhook called by emqx alarm resource.
   try {
-    console.log("Webhook alarm:".blue);
+    console.log("Webhook alarm:".magenta);
     console.log(`>>> token from emqx resource: ${req.headers.token}`.blue); // this token is defined on http://localhost:18083/#/resources > view
     if (req.headers.token !== "iotapp") {
       throw new Error("Invalid emqx token.")

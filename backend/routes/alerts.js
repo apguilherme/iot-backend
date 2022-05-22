@@ -62,7 +62,7 @@ router.delete("/delete/:deviceID/:emqxRuleId", async (req, res) => {
 router.get("/notifications", async (req, res) => {
     try {
         let userID = req.userInfo.id;
-        let notifications = await Notification.find({ userID }).sort({createdAt: -1});
+        let notifications = await Notification.find({ userId: userID }).sort({createdAt: -1});
         res.status(200).send({ "message": "success", "userNotifications": notifications });
     } catch (error) {
         console.log("/notifications error: ".red + error);

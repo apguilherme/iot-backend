@@ -75,5 +75,8 @@ services:
       - vol-emqx-log:/opt/emqx/log
     links:
       - mongo
-    extra_hosts: # for webhooks, ipv4, use this only when running locally!!!
-      - "localhost:192.168.15.89"
+    extra_hosts: 
+      # for webhooks, ipv4, use this only when running locally! ipconfig /all
+      # This IP influence status of EMQX Resources.
+      - "localhost:192.168.15.89" # casa
+      #- "localhost:192.168.43.27" # hotspot

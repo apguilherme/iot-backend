@@ -4,7 +4,7 @@ const widgetSchema = new mongoose.Schema({
     type: { type: String, required: [true] },
     name: { type: String, required: [true] },
     description: { type: String, required: [true] },
-    icon: { type: String, required: [true] },
+    icon: { type: String },
     unit: { type: String }, // cannot be required
     timeInterval: { type: Number, required: [true] },
     size: { type: String, required: [true] },
