@@ -2,10 +2,13 @@ const express = require("express");
 const axios = require("axios");
 const router = express.Router();
 const colors = require("colors");
+const { v4: uuidv4 } = require('uuid');
+const authorize = require("../middleware/auth.js");
 const Device = require("../models/Device.js");
 const Dashboard = require("../models/Dashboard.js");
 const EmqxSaver = require("../models/EmqxSaver.js");
 const EmqxAlert = require("../models/EmqxAlert.js");
+const EmqxAuthRule = require("../models/EmqxAuthRule.js");
 
 const EMQX_API_RULES = process.env.EMQX_API_RULES;
 
@@ -18,7 +21,7 @@ const auth = {
 
 // CRUD devices
 
-router.get("/all", async (req, res) => {
+router.get("/all", authorize, async (req, res) => {
   try {
     let userID = req.userInfo.id;
     let devices = await Device.find({ user: userID }).populate('user', ["id", "name", "email"]);
@@ -51,7 +54,7 @@ router.get("/all", async (req, res) => {
   }
 });
 
-router.get("/:deviceID", async (req, res) => {
+router.get("/:deviceID", authorize, async (req, res) => {
   try {
     let userID = req.userInfo.id;
     let _id = req.params.deviceID;
@@ -64,7 +67,7 @@ router.get("/:deviceID", async (req, res) => {
   }
 });
 
-router.post("/create", async (req, res) => {
+router.post("/create", authorize, async (req, res) => {
   try {
     let userID = req.userInfo.id;
     let body = req.body;
@@ -73,6 +76,7 @@ router.post("/create", async (req, res) => {
       name: body.name,
       description: body.description,
       variables: body.variables,
+      password: uuidv4(),
     });
     // create rule on emqx broker and mongo
     let rule = await createSaverRule(userID, device._id, false);
@@ -83,7 +87,7 @@ router.post("/create", async (req, res) => {
   }
 });
 
-router.delete("/delete/:deviceID/:emqxRuleId", async (req, res) => {
+router.delete("/delete/:deviceID/:emqxRuleId", authorize, async (req, res) => {
   try {
     let userID = req.userInfo.id;
     let deviceId = req.params.deviceID;
@@ -98,7 +102,7 @@ router.delete("/delete/:deviceID/:emqxRuleId", async (req, res) => {
   }
 });
 
-router.put("/update/:deviceID", async (req, res) => { // not being used
+router.put("/update/:deviceID", authorize, async (req, res) => { // not being used
   try {
     let userID = req.userInfo.id;
     let _id = req.params.deviceID;
@@ -113,7 +117,7 @@ router.put("/update/:deviceID", async (req, res) => { // not being used
 
 // CRUD emqx rules
 
-router.put("/updateSaverRule/:deviceID", async (req, res) => {
+router.put("/updateSaverRule/:deviceID", authorize, async (req, res) => {
   try {
     let userID = req.userInfo.id;
     let deviceID = req.params.deviceID;
@@ -227,5 +231,74 @@ async function getAlarmRules(userId) {
     console.log("getAlarmRules error: ".red, error);
   }
 }
+
+// DEVICE CREDENTIALS
+
+router.post("/devicecredentials", async (req, res) => {
+  try {
+    let deviceId = req.body.deviceID;
+    let devicePwd = req.body.devicePwd;
+    let device = await Device.findOne({ _id: deviceId });
+    if (devicePwd !== device.password) {
+      res.status(401).send({ "message": "failure", "credentials": { username: null, password: null,topic: null,variables: null } });
+      return;
+    }
+    else if (devicePwd === device.password) { 
+      // check if device password is correct (this password are available at devices table on frontend).
+      let userId = device.user._id.toString();
+      var credentials = await getAndGenerateDeviceCredentials(deviceId, userId);
+      res.status(200).send({ "message": "success", "credentials": { 
+        username: credentials.username, 
+        password: credentials.password,
+        topic: `${userId}/${deviceId}/`,
+        variables: device.variables,
+      } });
+      setTimeout(() => {
+        // call it again after 60s to avoid someone else to connect using same credentials.
+        getAndGenerateDeviceCredentials(deviceId, userId);
+      }, 60000); // 60s may be enought time for a device to connect.
+    }
+  } catch (error) {
+    console.log("/devicecredentials/:deviceID error: ".red + error);
+    res.status(500).json({ "message": "failure", "error": error });
+  }
+});
+
+async function getAndGenerateDeviceCredentials(deviceID, userID) {
+  try {
+    var credentials = await EmqxAuthRule.find({ type: "device", userId: userID, deviceId: deviceID });
+    let credentialsReturn = null;
+    if (credentials.length === 0 || !credentials) {
+      let newCred = {
+        userId: userID,
+        deviceId: deviceID,
+        username: uuidv4(),
+        password: uuidv4(),
+        publish: [userID + "/" + deviceID + "/+/sdata"],
+        subscribe: [userID + "/" + deviceID + "/+/actdata"],
+        type: "device",
+      };
+      credentialsReturn = await EmqxAuthRule.create(newCred);
+      console.log("Device broker credentials created.".yellow, "userId:", userID, "deviceId:", deviceID);
+    }
+    else {
+      let name = uuidv4();
+      let pass = uuidv4();
+      credentialsReturn = await EmqxAuthRule.findOneAndUpdate(
+        { type: "device", deviceId: deviceID, userId: userID },
+        { $set: { username: name, password: pass } },
+        { new: true }, // flag to return the updated document
+      );
+      if (credentialsReturn) {
+        console.log("Device broker credentials updated.".yellow, "userId:", userID, "deviceId:", deviceID);
+      }
+    }
+    return credentialsReturn;
+  } catch (error) {
+    console.log("getAndGenerateDeviceCredentials error: ".red + error);
+    res.status(500).json({ "message": "failure", "error": error });
+  }
+}
+
 
 module.exports = router;

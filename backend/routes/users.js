@@ -135,7 +135,7 @@ async function getAndGenerateCredentials(userID) {
   try {
     let credentials = await EmqxAuthRule.findOne({ type: "user", userId: userID });
     let credentialsReturn = null;
-    if (!credentials) { // there is no credentials yet, create it.
+    if (credentials.length === 0 || !credentials) { // there is no credentials yet, create it.
       let newCred = {
         userId: userID,
         username: uuidv4(),
@@ -161,7 +161,7 @@ async function getAndGenerateCredentials(userID) {
     }
     return credentialsReturn;
   } catch (error) {
-    console.log("/getAndGenerateCredentials error: ".red + error);
+    console.log("getAndGenerateCredentials error: ".red + error);
     res.status(500).json({ "message": "failure", "error": error });
   }
 };

@@ -8,6 +8,7 @@ const DeviceData = require("../models/DeviceData.js");
 const Device = require("../models/Device.js");
 const Notification = require("../models/Notification.js");
 
+const EMQX_RESOURCE_TOKEN = process.env.EMQX_RESOURCE_TOKEN; // token sent by emqx Resource qhen calling webhook.
 var mqttClient; // mqtt client to send notifications to frontend.
 
 function beginMqtt() {
@@ -47,7 +48,7 @@ router.post("/saver", async (req, res) => { // webhook called when data.payload.
   try {
     console.log("Webhook saver:".magenta);
     console.log("Token from emqx resource:".magenta, req.headers.token); // this token is defined on http://localhost:18083/#/resources > view
-    if (req.headers.token !== "iotapp") {
+    if (req.headers.token !== EMQX_RESOURCE_TOKEN) {
       throw new Error("Invalid emqx token.")
     };
     let data = req.body;
@@ -76,7 +77,7 @@ router.post("/alarm", async (req, res) => { // webhook called by emqx alarm reso
   try {
     console.log("Webhook alarm:".magenta);
     console.log("Token from emqx resource:".magenta, req.headers.token); // this token is defined on http://localhost:18083/#/resources > view
-    if (req.headers.token !== "iotapp") {
+    if (req.headers.token !== EMQX_RESOURCE_TOKEN) {
       throw new Error("Invalid emqx token.")
     };
     let alertReceived = req.body;
