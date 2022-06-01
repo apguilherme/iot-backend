@@ -24,7 +24,8 @@ app.use("/api/alerts", authorize, require("./routes/alerts.js"));
 app.use("/api/webhooks", require("./routes/webhooks.js")); // used by emqx Resources for saver and alarm
 // app.use("/api/broker", require("./routes/broker.js")); // test endpoint
 
-app.get("/", (req, res) => {
+app.get("/health", (req, res) => {
+  // TODO: return emqx and mongo status.
   res.json({"message": "Backend running..."});
 });
 
