@@ -19,7 +19,7 @@ services:
       MONGO_INITDB_ROOT_USERNAME: "${MONGO_INITDB_ROOT_USERNAME}"
       MONGO_INITDB_ROOT_PASSWORD: "${MONGO_INITDB_ROOT_PASSWORD}"
     ports:
-      - ${MONGO_EXTERNAL_PORT}:27017
+      - 27017:27017
     volumes:
       - ./mongoDataIot:/data/db
 
@@ -46,7 +46,7 @@ services:
       #- "localhost:192.168.43.27" # hotspot celular
     environment: # change variables defined at \opt\emqx\etc\emqx.conf
       EMQX_NAME: iot
-      EMQX_HOST: 127.0.0.1
+      EMQX_HOST: "${EMQX_HOST}"
       TZ: "${TZ}" # Time Zone
       EMQX_LOADED_PLUGINS: "emqx_recon,emqx_retainer,emqx_management,emqx_dashboard,emqx_auth_mongo" # Plugins to start
       EMQX_DASHBOARD__DEFAULT_USER__PASSWORD: "${EMQX_DASHBOARD__DEFAULT_USER__PASSWORD}" # DEFAULT DASH PASS
@@ -73,3 +73,27 @@ services:
       EMQX_AUTH__MONGO__ACL_QUERY: "on" # Access control list, ACL query
       EMQX_AUTH__MONGO__ACL_QUERY__COLLECTION: "emqxauthrules" # GET /brokerauth
       EMQX_AUTH__MONGO__ACL_QUERY__SELECTOR: "username=%u"
+
+  backend: 
+    container_name: my-backend
+    build: "../backend"
+    restart: always
+    environment:
+      JWT_SECRET: "${JWT_SECRET}"
+      EMQX_RESOURCE_TOKEN: "${EMQX_RESOURCE_TOKEN}"
+      EMQX_SUPERUSER: "${EMQX_SUPERUSER}"
+      EMQX_USER: "${EMQX_USER}"
+      EMQX_PASS: "${EMQX_PASS}"
+      EMQX_HOST: emqx
+      EMQX_API_RULES: "${EMQX_API_RULES}"
+      EMQX_RESOURCE_SAVER_WEBHOOK_ID: "${EMQX_RESOURCE_SAVER_WEBHOOK_ID}"
+      EMQX_RESOURCE_ALARM_WEBHOOK_ID: "${EMQX_RESOURCE_ALARM_WEBHOOK_ID}"
+      API_PORT: ${API_PORT}
+      MONGO_EXTERNAL_PORT: ${MONGO_EXTERNAL_PORT}
+      MONGO_HOST: "${MONGO_HOST}"
+      ENVIRONMENT: dev
+    ports:
+      - 3000:3000
+    links:
+      - mongo
+      - emqx

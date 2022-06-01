@@ -35,13 +35,18 @@ const mongoPass = process.env.EMQX_PASS;
 const mongoPort = `${process.env.MONGO_EXTERNAL_PORT}`;
 const mongoHost = process.env.MONGO_HOST;
 const mongoDb = "my-iot-db";
-var uri = `mongodb://${mongoUser}:${mongoPass}@${mongoHost}:${mongoPort}/${mongoDb}`;
+var uri = `mongodb://${mongoUser}:${mongoPass}@${mongoHost}:${mongoPort}/${mongoDb}?authSource=admin`;
 var options = { useNewUrlParser: true, useUnifiedTopology: true, authSource: "admin" };
+
 mongoose.connect(uri, options).then(() => {
   console.log(">>> Connected to db.".green);
 }, (error) => {
   console.log(">>> Not connected to db: ".red + error);
 })
+
+let db = mongoose.connection;
+db.on('open', () => console.log(">>> Connection to db open.") );
+db.on('error', () => console.log(">>> Error on db connection.".red) );
 
 // server
 app.listen(process.env.API_PORT, () => {

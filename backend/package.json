@@ -4,9 +4,11 @@
   "description": "Contains what is necessary to run the project.",
   "main": "./backend/index.js",
   "scripts": {
-    "my-docker": "cd services && docker-compose --env-file ../.env up -d",
-    "start": "node ./backend/index.js",
-    "dev": "npm run my-docker && supervisor ./backend/index.js"
+    "my-docker": "cd ../services && docker-compose --env-file ../.env up -d",
+    "start": "node index.js",
+    "dev": "npm run my-docker && supervisor index.js",
+    "up": "cd ../services && docker-compose --env-file ../.env up",
+    "build-up": "cd ../services && docker-compose --env-file ../.env build && docker-compose --env-file ../.env up"
   },
   "dependencies": {
     "axios": "^0.27.2",
