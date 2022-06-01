@@ -4,10 +4,9 @@
   "description": "Contains what is necessary to run the project.",
   "main": "./backend/index.js",
   "scripts": {
-    "my-docker": "cd services && docker compose --env-file ../.env up -d",
-    "my-docker-local": "cd services && docker-compose --env-file ../.env up -d",
+    "my-docker": "cd services && docker-compose --env-file ../.env up -d",
     "start": "npm run my-docker && node ./backend/index.js",
-    "dev": "npm run my-docker-local && supervisor ./backend/index.js"
+    "dev": "npm run my-docker && supervisor ./backend/index.js"
   },
   "dependencies": {
     "axios": "^0.27.2",
