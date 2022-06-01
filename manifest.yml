@@ -1,0 +1,5 @@
+applications:
+ - name: iotAppBackend
+   #random-route: true
+   host: iotapp-backend
+   memory: 128M

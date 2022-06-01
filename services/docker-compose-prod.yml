@@ -10,10 +10,26 @@ volumes:
 
 services:
 
+  node: 
+    container_name: node
+    image: "node:14"
+    #restart: always
+    working_dir: /home/node/app
+    volumes:
+      - ./mycode/index.js:/home/node/app/index.js
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+      - "80:3002"
+    link:
+      - emqx
+      - mongo
+    command: sh -c "node index.js"
+
   mongo:
     container_name: my-mongo
     image: mongo:4.4
-    restart: always
+    #restart: always
     environment:
       TZ: "${TZ}" # Time Zone
       MONGO_INITDB_ROOT_USERNAME: "${MONGO_INITDB_ROOT_USERNAME}"
@@ -26,7 +42,7 @@ services:
   emqx:
     container_name: my-emqx
     image: emqx/emqx:4.2.3
-    restart: always
+    #restart: always
     ports:
       - 18083:18083 # dashboard port -> http://localhost:18083/#/
       #- 18084:18084 # secure dashboard (ssl)

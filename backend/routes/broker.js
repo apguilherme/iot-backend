@@ -5,7 +5,7 @@ const colors = require("colors");
 
 // TEST ENDPOINT, NOT BEING USED.
 
-const EMQX_API_RESOURCES = "http://localhost:8085/api/v4/resources/";
+const EMQX_API_RESOURCES = `http://${process.env.EMQX_HOST}:8085/api/v4/resources/`;
 
 const auth = {
     auth: {
@@ -53,7 +53,7 @@ async function createResources() {
     let payloadSaver = {
         "type": "web_hook",
         "config": {
-            url: "http://localhost:3000/api/webhooks/saver",
+            url: `http://${process.env.EMQX_HOST}:3000/api/webhooks/saver`,
             headers: { token: "iotapp" },
             method: "POST"
         },
@@ -62,7 +62,7 @@ async function createResources() {
     let payloadAlarm = {
         "type": "web_hook",
         "config": {
-            url: "http://localhost:3000/api/webhooks/alarm",
+            url: `http://${process.env.EMQX_HOST}:3000/api/webhooks/alarm`,
             headers: { token: "iotapp" },
             method: "POST"
         },

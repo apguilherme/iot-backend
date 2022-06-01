@@ -14,7 +14,7 @@ var mqttClient; // mqtt client to send notifications to frontend.
 function beginMqtt() {
   let options = {
     port: 1883,
-    host: "localhost",
+    host: process.env.EMQX_HOST,
     clientId: "backend/" + uuidv4(),
     username: process.env.EMQX_SUPERUSER, // can send and subscribe to any topic
     password: process.env.EMQX_SUPERUSER,
@@ -25,7 +25,7 @@ function beginMqtt() {
     clean: true,
     encoding: "utf8",
   };
-  mqttClient = mqtt.connect("mqtt://localhost", options);
+  mqttClient = mqtt.connect(`mqtt://${process.env.EMQX_HOST}`, options);
   mqttClient.on("connect", function () {
     console.log(">>> MQTT client connected successfully.".green);
   });
