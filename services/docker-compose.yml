@@ -34,7 +34,7 @@ services:
       - 8883:8883
       - 8083:8083 # websocket
       #- 8084:8084 # secure websocket
-      - 8085:8081 # emqx api
+      - 8081:8081 # emqx
     volumes:
       - vol-emqx-data:/opt/emqx/data # container data
       #- vol-emqx-etc:/opt/emqx/etc # emqx config, vars setted bellow, so its not necessary
@@ -97,3 +97,5 @@ services:
     links:
       - mongo
       - emqx
+    extra_hosts:
+      - "localhost:192.168.15.89"
