@@ -76,7 +76,7 @@ services:
 
   backend: 
     container_name: my-backend
-    build: "../backend"
+    build: "."
     restart: always
     environment:
       JWT_SECRET: "${JWT_SECRET}"

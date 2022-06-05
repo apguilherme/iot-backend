@@ -3,12 +3,15 @@
   "version": "1.0.0",
   "description": "Contains what is necessary to run the project.",
   "main": "./backend/index.js",
+  "engines" : { 
+    "npm" : ">=6.14.13",
+    "node" : ">=14.17.0"
+  },
   "scripts": {
-    "my-docker": "cd ../services && docker-compose --env-file ../.env up -d",
-    "start": "node index.js",
-    "dev": "npm run my-docker && supervisor index.js",
-    "up": "cd ../services && docker-compose --env-file ../.env up",
-    "build-up": "cd ../services && docker-compose --env-file ../.env build && docker-compose --env-file ../.env up"
+    "start": "node ./backend/index.js",
+    "dev": "npm run up && supervisor index.js",
+    "up": "docker-compose --env-file .env up -d",
+    "up-build": "docker-compose --env-file .env up --build"
   },
   "dependencies": {
     "axios": "^0.27.2",

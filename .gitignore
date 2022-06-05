@@ -1,3 +1,4 @@
 /services/mongoDataIot
 /node_modules
 .env
+mongoDataIot

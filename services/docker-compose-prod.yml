@@ -11,7 +11,7 @@ volumes:
 services:
 
   node: 
-    container_name: node
+    container_name: my-node
     image: "node:14"
     #restart: always
     working_dir: /home/node/app
